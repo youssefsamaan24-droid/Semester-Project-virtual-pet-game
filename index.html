@@ -1,5 +1,1092 @@
-{
-    "configurations": [
-    
-    ]
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>🐾 Ultimate Virtual Pet Game — Advanced Version</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #5ec937;
+    --text: #ffffff;
+    --card: rgba(255,255,255,0.15);
+    --accent: #ffffff;
+    --primary: #3b8f2a;
+    --secondary: #2b6c20;
+    --bar-bg: rgba(255,255,255,0.3);
+    --bar-fill: #ffcc00;
+    --danger: #ff5e5e;
+    --good: #48c774;
+    --info: #3273dc;
+    --shadow: rgba(0,0,0,0.25);
+  }
+  body.dark {
+    --bg: #1f1f1f;
+    --text: #e8e8e8;
+    --card: rgba(255,255,255,0.06);
+    --accent: #e8e8e8;
+    --primary: #7db566;
+    --secondary: #527d4c;
+    --bar-bg: rgba(255,255,255,0.2);
+    --bar-fill: #70c2ff;
+    --danger: #ff7a7a;
+    --good: #6be38d;
+    --info: #7ebcff;
+    --shadow: rgba(0,0,0,0.45);
+  }
+
+  /* Base layout */
+  html, body {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, var(--bg), #3f9e2f);
+    color: var(--text);
+    transition: background 0.4s ease, color 0.2s ease;
+  }
+  header {
+    text-align: center;
+    padding: 20px 12px 0;
+  }
+  h1 {
+    margin: 0 0 8px 0;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-shadow: 0 2px 8px var(--shadow);
+  }
+  .sub {
+    opacity: 0.9;
+    font-size: 0.95rem;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 900px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 6px 16px var(--shadow);
+    backdrop-filter: blur(6px);
+  }
+
+  /* Buttons */
+  .btn {
+    appearance: none;
+    border: none;
+    outline: none;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fff;
+    color: #333;
+    margin: 6px 6px 6px 0;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 4px 10px var(--shadow);
+    transform: translateZ(0);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .btn:hover { transform: translateY(-1px) scale(1.02); }
+  .btn:active { transform: translateY(0) scale(0.98); box-shadow: 0 2px 6px var(--shadow); }
+  .btn.primary { background: var(--good); color: #0b2c16; }
+  .btn.info { background: var(--info); color: #0c1c36; }
+  .btn.danger { background: var(--danger); color: #400; }
+  .btn.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.25); color: var(--accent); }
+
+  /* Inputs */
+  .row {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  input, select {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.85);
+    color: #222;
+    outline: none;
+    min-width: 160px;
+    box-shadow: 0 2px 6px var(--shadow) inset;
+  }
+
+  /* Pet image & stage badge */
+  .pet-visual {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    align-items: center;
+    justify-items: center;
+    gap: 10px;
+  }
+  .pet-img {
+    width: 220px; height: 220px; object-fit: contain; display: none;
+    filter: drop-shadow(0 6px 16px var(--shadow));
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
+  }
+  .stage-badge {
+    padding: 6px 10px; border-radius: 100px; font-weight: 700;
+    background: rgba(255,255,255,0.9); color: #222;
+    box-shadow: 0 4px 10px var(--shadow);
+  }
+
+  /* Status text */
+  #status {
+    white-space: pre-line; font-size: 0.95rem; line-height: 1.25rem;
+    margin-top: 6px;
+  }
+
+  /* Progress bars */
+  .bars { margin-top: 12px; }
+  .bar { margin: 8px 0; }
+  .bar-label { font-size: 0.8rem; opacity: 0.9; margin-bottom: 4px; }
+  .bar-outer {
+    width: 100%; height: 12px; border-radius: 100px; background: var(--bar-bg);
+    box-shadow: inset 0 2px 8px var(--shadow);
+  }
+  .bar-inner {
+    height: 12px; border-radius: 100px; background: var(--bar-fill);
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+
+  /* Panels toggled */
+  .panels { margin-top: 10px; }
+  .panel { display: none; }
+  .panel.show { display: block; }
+
+  /* Badge chips */
+  .badge {
+    display: inline-flex; align-items: center;
+    gap: 6px; padding: 6px 10px; margin: 6px; border-radius: 100px;
+    background: rgba(255,255,255,0.92); color: #222; font-weight: 600;
+    box-shadow: 0 3px 8px var(--shadow);
+  }
+  .badge .emoji { font-size: 1.1rem; }
+
+  /* Notification toast */
+  #toast {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.75); color: #fff;
+    padding: 10px 14px; border-radius: 10px; box-shadow: 0 6px 16px var(--shadow);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  #toast.show {
+    opacity: 1; transform: translateX(-50%) translateY(-4px);
+  }
+
+  /* Divider */
+  .divider { height: 1px; background: rgba(255,255,255,0.2); margin: 12px 0; }
+
+  /* Leaderboard styles */
+  #leaderboardList { padding: 0 0 8px 22px; }
+
+  /* Inventory list */
+  .inventory {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 8px;
+  }
+  .inventory-item {
+    background: rgba(255,255,255,0.9); color: #222; border-radius: 10px; padding: 8px;
+    box-shadow: 0 4px 10px var(--shadow);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .inventory-item .qty { font-weight: 700; }
+
+  /* Footer note */
+  footer {
+    text-align: center; font-size: 0.85rem; opacity: 0.8; padding: 12px 0 24px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🐾 Ultimate Virtual Pet Game</h1>
+  <div class="sub">The Ultimate Pet Simulator✨</div>
+</header>
+
+<div class="container">
+  <!-- Pet Selection Panel -->
+  <div id="petPanel" class="card">
+    <div class="row">
+      <input id="petName" placeholder="Pet Name" aria-label="Pet Name" />
+      <select id="petType" aria-label="Pet Type">
+        <option value="dragon">Dragon</option>
+        <option value="dog">Dog</option>
+        <option value="cat">Cat</option>
+      </select>
+      <button id="startBtn" class="btn primary" aria-label="Start Game">Start Game</button>
+      <button id="loadBtn" class="btn ghost" aria-label="Load Save">Load Save</button>
+      <button id="clearBtn" class="btn danger" aria-label="Clear Save">Clear Save</button>
+    </div>
+    <div style="font-size:0.9rem;opacity:0.9">Tip: Name your pet and choose a type. Dark Mode and game state persist across sessions.</div>
+  </div>
+
+  <!-- Game UI -->
+  <div id="gameUI" class="grid" style="display:none;">
+    <!-- Left: Visual + Stats -->
+    <section class="card pet-visual">
+      <h2 id="petTitle">—</h2>
+      <span id="stageBadge" class="stage-badge">Stage: Egg</span>
+      <img id="petImage" class="pet-img" src="" alt="Pet" />
+      <div id="status"></div>
+      <div class="bars">
+        <div class="bar"><div class="bar-label">Hunger</div><div class="bar-outer"><div id="bar-hunger" class="bar-inner"></div></div></div>
+        <div class="bar"><div class="bar-label">Energy</div><div class="bar-outer"><div id="bar-energy" class="bar-inner"></div></div></div>
+        <div class="bar"><div class="bar-label">Cleanliness</div><div class="bar-outer"><div id="bar-clean" class="bar-inner"></div></div></div>
+        <div class="bar"><div class="bar-label">Health</div><div class="bar-outer"><div id="bar-health" class="bar-inner"></div></div></div>
+        <div class="bar"><div class="bar-label">Happiness</div><div class="bar-outer"><div id="bar-happy" class="bar-inner"></div></div></div>
+        <div class="bar"><div class="bar-label">XP</div><div class="bar-outer"><div id="bar-xp" class="bar-inner"></div></div></div>
+      </div>
+    </section>
+
+    <!-- Right: Actions + Panels -->
+    <section>
+      <div class="card">
+        <div class="row">
+          <button id="feedBtn" class="btn">Feed</button>
+          <button id="playBtn" class="btn">Play</button>
+          <button id="restBtn" class="btn">Rest</button>
+          <button id="cleanBtn" class="btn">Clean</button>
+          <button id="exploreBtn" class="btn info">Explore</button>
+          <button id="questBtn" class="btn ghost">Quests</button>
+          <button id="craftBtn" class="btn ghost">Craft</button>
+          <button id="breedBtn" class="btn ghost">Breed</button>
+          <button id="customizeBtn" class="btn ghost">Customize</button>
+          <button id="saveBtn" class="btn primary">Save</button>
+        </div>
+        <div class="row">
+          <button id="dragonAction" class="btn info" style="display:none;">Breathe Fire</button>
+          <button id="dogAction" class="btn info" style="display:none;">Fetch</button>
+          <button id="catAction" class="btn info" style="display:none;">Scratch</button>
+          <button id="shopBtn" class="btn">Shop</button>
+          <button id="miniGameBtn" class="btn">Mini-Game</button>
+          <button id="achievementsBtn" class="btn">Achievements</button>
+          <button id="leaderboardBtn" class="btn">Leaderboard</button>
+          <button id="darkModeBtn" class="btn">Dark Mode</button>
+        </div>
+      </div>
+
+      <div class="panels">
+        <!-- Shop -->
+        <div id="shop" class="card panel">
+          <h3>Shop</h3>
+          <p>Coins: <span id="coins">0</span></p>
+          <div class="row">
+            <button class="btn" data-buy="food">Buy Food (10)</button>
+            <button class="btn" data-buy="toy">Buy Toy (15)</button>
+            <button class="btn" data-buy="medicine">Buy Medicine (20)</button>
+            <button class="btn" data-buy="hat">Buy Hat (25)</button>
+            <button class="btn" data-buy="bow">Buy Bow (25)</button>
+            <button class="btn" data-buy="heartGem">Buy Heart Gem (50)</button>
+            <button class="btn info" id="invBtn">Show Inventory</button>
+          </div>
+          <div id="inventory" class="inventory" aria-live="polite"></div>
+        </div>
+
+        <!-- Mini-Game -->
+        <div id="miniGame" class="card panel">
+          <h3>Reflex Mini-Game: Earn Coins & XP</h3>
+          <p>Press when the target turns <strong>green</strong>! You have 15 seconds. Combos increase rewards.</p>
+          <div class="row">
+            <button id="startMiniGame" class="btn primary">Start</button>
+            <button id="pressMiniGame" class="btn" disabled>Press!</button>
+            <span id="mgStatus" style="margin-left:8px;opacity:0.9"></span>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div id="achievements" class="card panel">
+          <h3>Achievements</h3>
+          <div id="badgeContainer"></div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div id="leaderboard" class="card panel">
+          <h3>Leaderboard</h3>
+          <ol id="leaderboardList"></ol>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" role="status" aria-live="polite">—</div>
+
+
+
+<script>
+(function(){
+  'use strict';
+
+  /*********************
+   * Utility Functions *
+   *********************/
+  const clamp = (v, min=0, max=100) => Math.max(min, Math.min(max, v));
+  const fmt = n => Math.round(n);
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => document.querySelectorAll(sel);
+  const showToast = (msg) => {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1250);
+  };
+
+  // WebAudio simple SFX
+  const audioCtx = typeof AudioContext !== 'undefined' ? new AudioContext() :
+                   (typeof webkitAudioContext !== 'undefined' ? new webkitAudioContext() : null);
+
+  function playSfx(freq=440, duration=0.12, type='sine', vol=0.12) {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = vol;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    setTimeout(() => osc.stop(), duration * 1000);
+  }
+
+  // Persistent dark mode
+  const persistedDark = localStorage.getItem('pet.dark') === '1';
+  if (persistedDark) document.body.classList.add('dark');
+
+  /****************
+   * Game Classes *
+   ****************/
+  const PET_IMAGES = {
+    dragon: {
+      egg: 'dragegg.jfif',
+      child: 'babydragon.jfif',
+      adult: 'https://cdn-icons-png.flaticon.com/512/616/616554.png',
+      legendary: 'https://cdn-icons-png.flaticon.com/512/616/616408.png'
+    },
+    dog: {
+      egg: 'https://cdn-icons-png.flaticon.com/512/91/91544.png',
+      child: 'https://cdn-icons-png.flaticon.com/512/194/194279.png',
+      adult: 'https://cdn-icons-png.flaticon.com/512/194/194279.png',
+      legendary: 'https://cdn-icons-png.flaticon.com/512/194/194279.png'
+    },
+    cat: {
+      egg: 'cat.png',
+      child: 'https://cdn-icons-png.flaticon.com/512/220/220206.png',
+      adult: 'https://cdn-icons-png.flaticon.com/512/220/220206.png',
+      legendary: 'https://static.vecteezy.com/system/resources/previews/060/619/220/non_2x/cute-drawing-cartoon-brown-cat-head-with-love-pin-cute-animal-doodle-for-sticker-icon-vector.jpg'
+    }
+  };
+  const STAGES = ['egg', 'child', 'adult', 'legendary'];
+
+  class VirtualPet {
+    constructor(name, type) {
+      this.name = name;
+      this.type = type;
+      this.hunger = 50;
+      this.energy = 50;
+      this.cleanliness = 50;
+      this.health = 100;
+      this.happiness = 50;
+      this.level = 1;
+      this.xp = 0;
+      this.age = 0;
+      this.stage = 'egg';
+      this.inventory = { food: 2, toy: 1, medicine: 1, hat: 0, bow: 0, heartGem: 0 };
+      this.alive = true;
+      this.dna = this.generateDNA();
+      this.weather = 'sunny';
+      this.timeOfDay = 'day';
+      this.quests = [];
+      this.coins = 0;
+      this.badges = [];
+      this.combo = 0;       // mini-game combo
+      this.accessory = null; // 'hat' | 'bow' | null
+    }
+
+    generateDNA() {
+      return {
+        color: ['red','blue','green','purple','gold'][Math.floor(Math.random()*5)],
+        trait: ['brave','lazy','curious','clever','lively'][Math.floor(Math.random()*5)]
+      };
+    }
+
+    getMood() {
+      if (!this.alive) return '💀 Dead';
+      if (this.health < 30 || this.hunger > 80) return '😢 Unhappy';
+      if (this.happiness > 80 && this.energy > 60) return '😄 Happy';
+      return '😐 Okay';
+    }
+
+    addXP(amount) {
+      this.xp += Math.max(0, amount);
+      const req = this.levelReq();
+      if (this.xp >= req) {
+        this.xp -= req;
+        this.level += 1;
+        playSfx(880, 0.15, 'triangle', 0.18);
+        showToast(`⭐ ${this.name} leveled up to ${this.level}!`);
+        this.checkEvolution(true);
+        this.badgeCheck('LevelUp', `Reached level ${this.level}`, '⭐');
+      }
+    }
+
+    levelReq() {
+      // Simple scaling
+      return 50 + (this.level * 25);
+    }
+
+    updateStatus() {
+      this.hunger = clamp(this.hunger);
+      this.energy = clamp(this.energy);
+      this.cleanliness = clamp(this.cleanliness);
+      this.health = clamp(this.health);
+      this.happiness = clamp(this.happiness);
+      const status = [
+        `${this.name} the ${this.type}`,
+        `Mood: ${this.getMood()}`,
+        `Stage: ${this.stage}  •  Level: ${this.level}  •  XP: ${fmt(this.xp)}/${this.levelReq()}`,
+        `Age: ${this.age}`,
+        `Hunger: ${fmt(this.hunger)}  •  Energy: ${fmt(this.energy)}`,
+        `Cleanliness: ${fmt(this.cleanliness)}  •  Health: ${fmt(this.health)}`,
+        `Happiness: ${fmt(this.happiness)}  •  Coins: ${fmt(this.coins)}`,
+        `DNA: ${this.dna.color}, ${this.dna.trait}`,
+        `Weather: ${this.weather}  •  Time: ${this.timeOfDay}`
+      ].join('\n');
+      DOM.status.textContent = status;
+      DOM.coins.textContent = fmt(this.coins);
+      // Bars
+      setBar(DOM.bars.hunger, this.hunger);
+      setBar(DOM.bars.energy, this.energy);
+      setBar(DOM.bars.clean, this.cleanliness);
+      setBar(DOM.bars.health, this.health);
+      setBar(DOM.bars.happy, this.happiness);
+      setBar(DOM.bars.xp, (this.xp / this.levelReq()) * 100);
+
+      this.checkAchievements();
+      this.updateImage();
+    }
+
+    updateImage() {
+      const stage = this.stage;
+      const src = PET_IMAGES[this.type][stage] || '';
+      DOM.petImage.src = src;
+      DOM.petImage.style.display = src ? 'block' : 'none';
+      DOM.stageBadge.textContent = `Stage: ${stage[0].toUpperCase()+stage.slice(1)}`;
+      // Accessory overlay via CSS filter approximation
+      if (this.accessory === 'hat') {
+        DOM.petImage.style.filter = 'drop-shadow(0 6px 16px var(--shadow)) hue-rotate(20deg) saturate(1.2)';
+      } else if (this.accessory === 'bow') {
+        DOM.petImage.style.filter = 'drop-shadow(0 6px 16px var(--shadow)) hue-rotate(-20deg) saturate(1.2)';
+      } else {
+        DOM.petImage.style.filter = 'drop-shadow(0 6px 16px var(--shadow))';
+      }
+    }
+
+    addCoins(amount) {
+      this.coins += Math.max(0, amount);
+    }
+
+    feed() {
+      if (this.inventory.food > 0) {
+        this.inventory.food--;
+        this.hunger = clamp(this.hunger - 22);
+        this.health = clamp(this.health + 4);
+        this.happiness = clamp(this.happiness + 6);
+        this.addCoins(1);
+        this.addXP(10);
+        playSfx(523.25, 0.12, 'sine', 0.15);
+        showToast(`${this.name} enjoyed the meal 🍖`);
+      } else {
+        playSfx(220, 0.08, 'sawtooth', 0.06);
+        showToast('No food! Buy some in the shop.');
+      }
+      this.updateStatus();
+    }
+
+    play() {
+      if (this.inventory.toy > 0) {
+        this.inventory.toy--;
+        this.happiness = clamp(this.happiness + 22);
+        this.energy = clamp(this.energy - 12);
+        this.addCoins(2);
+        this.addXP(12);
+        playSfx(659.25, 0.12, 'square', 0.12);
+        showToast(`${this.name} had fun 🎉`);
+      } else {
+        showToast('No toys! Try exploring or shop.');
+      }
+      this.updateStatus();
+    }
+
+    rest() {
+      this.energy = clamp(this.energy + 28);
+      this.health = clamp(this.health + 8);
+      this.happiness = clamp(this.happiness + 4);
+      this.addXP(6);
+      playSfx(392, 0.12, 'triangle', 0.1);
+      showToast(`${this.name} is well-rested 😴`);
+      this.updateStatus();
+    }
+
+    clean() {
+      this.cleanliness = clamp(this.cleanliness + 30);
+      this.happiness = clamp(this.happiness + 6);
+      this.addXP(8);
+      playSfx(740, 0.12, 'sine', 0.14);
+      showToast(`Sparkly clean ✨`);
+      this.updateStatus();
+    }
+
+    explore() {
+      const regions = ['Forest','Beach','City','Mountains','Fields','Cave'];
+      const found = ['coin','toy','food','medicine','nothing','coins','hat','bow'];
+      const region = regions[Math.floor(Math.random()*regions.length)];
+      const result = found[Math.floor(Math.random()*found.length)];
+      let msg = `Explored ${region} and found ${result}!`;
+      switch(result) {
+        case 'coin': this.addCoins(10); break;
+        case 'coins': this.addCoins(18); break;
+        case 'toy': this.inventory.toy++; break;
+        case 'food': this.inventory.food++; break;
+        case 'medicine': this.inventory.medicine++; break;
+        case 'hat': this.inventory.hat++; break;
+        case 'bow': this.inventory.bow++; break;
+        case 'nothing': msg = `Explored ${region} and found nothing...`; break;
+      }
+      this.happiness = clamp(this.happiness + 8);
+      this.energy = clamp(this.energy - 8);
+      this.addXP(10);
+      playSfx(523.25, 0.1, 'sine', 0.1);
+      showToast(msg);
+      this.updateStatus();
+    }
+
+    // Special actions
+    breatheFire() {
+      if (this.type !== 'dragon') return;
+      if (this.energy < 25) { showToast(`${this.name} is too tired to breathe fire.`); return; }
+      this.energy = clamp(this.energy - 20);
+      this.happiness = clamp(this.happiness + 10);
+      this.cleanliness = clamp(this.cleanliness - 6);
+      this.addCoins(5);
+      this.addXP(16);
+      playSfx(220, 0.08, 'sawtooth', 0.08);
+      playSfx(110, 0.1, 'sawtooth', 0.08);
+      showToast(`🔥 ${this.name} breathed fire!`);
+      this.updateStatus();
+    }
+    fetch() {
+      if (this.type !== 'dog') return;
+      if (this.energy < 20) { showToast(`${this.name} is too tired to fetch.`); return; }
+      this.energy = clamp(this.energy - 12);
+      this.happiness = clamp(this.happiness + 16);
+      this.addCoins(6);
+      this.addXP(14);
+      playSfx(660, 0.09, 'square', 0.1);
+      showToast(`🦴 ${this.name} fetched a stick!`);
+      this.updateStatus();
+    }
+    scratch() {
+      if (this.type !== 'cat') return;
+      this.happiness = clamp(this.happiness + 14);
+      this.energy = clamp(this.energy - 8);
+      this.addCoins(4);
+      this.addXP(12);
+      playSfx(880, 0.09, 'triangle', 0.1);
+      showToast(`😼 ${this.name} scratched happily!`);
+      this.updateStatus();
+    }
+
+    // Quests
+    checkQuests() {
+      // Simple rotating quests
+      this.quests = [
+        { id: 'feed3', text: 'Feed 3 times', progress: 0, target: 3, reward: { coins: 15, xp: 20 } },
+        { id: 'play2', text: 'Play twice', progress: 0, target: 2, reward: { coins: 12, xp: 16 } },
+        { id: 'explore1', text: 'Explore once', progress: 0, target: 1, reward: { coins: 8, xp: 12 } }
+      ];
+      showToast('New quests received 📜');
+    }
+
+    completeQuest(id) {
+      const q = this.quests.find(q => q.id === id);
+      if (q && q.progress >= q.target) {
+        this.addCoins(q.reward.coins);
+        this.addXP(q.reward.xp);
+        this.badgeCheck('Questor', 'Completed a quest', '📜');
+        showToast(`Quest complete: +${q.reward.coins} coins, +${q.reward.xp} XP`);
+        playSfx(988, 0.13, 'sine', 0.16);
+      }
+      this.updateStatus();
+    }
+
+    craft() {
+      if (this.inventory.toy >= 2) {
+        this.inventory.toy -= 2;
+        this.inventory.food++;
+        this.addXP(10);
+        showToast('Crafted a Super Snack 🍪 (+1 food)');
+        playSfx(1046, 0.1, 'square', 0.1);
+      } else {
+        showToast('Not enough toys to craft.');
+      }
+      this.updateStatus();
+    }
+
+    breed() {
+      if (this.stage !== 'adult' && this.stage !== 'legendary') {
+        showToast('Breeding requires adult stage.');
+        return;
+      }
+      if (this.inventory.heartGem < 1) {
+        showToast('Need a Heart Gem from the shop ❤️');
+        return;
+      }
+      this.inventory.heartGem--;
+      const childDNA = this.generateDNA();
+      showToast(`🍼 A new egg formed! Trait: ${childDNA.trait}, color: ${childDNA.color}`);
+      // Breeding reward: coins + XP + temporary egg buff
+      this.addCoins(20);
+      this.addXP(25);
+      this.badgeCheck('Breeder', 'Performed breeding', '🍼');
+      playSfx(523, 0.08, 'sine', 0.12);
+      this.updateStatus();
+    }
+
+    customize() {
+      if (this.inventory.hat > 0) {
+        this.inventory.hat--; this.accessory = 'hat';
+        showToast('🎩 Equipped Hat');
+      } else if (this.inventory.bow > 0) {
+        this.inventory.bow--; this.accessory = 'bow';
+        showToast('🎀 Equipped Bow');
+      } else {
+        this.accessory = null;
+        showToast('No accessories. Explore or shop!');
+      }
+      this.updateStatus();
+    }
+
+    badgeCheck(key, text, emoji='🏅') {
+      if (!this.badges.find(b => b.key === key)) {
+        this.badges.push({ key, text, emoji });
+        renderBadges(this.badges);
+      }
+    }
+
+    checkAchievements() {
+      if (this.health >= 100) this.badgeCheck('Healthy', 'Max health reached', '💪');
+      if (this.coins >= 100) this.badgeCheck('Wealthy', '100+ coins', '💰');
+      if (this.happiness >= 95) this.badgeCheck('Joy', 'Very happy pet', '😊');
+      if (this.level >= 5) this.badgeCheck('Pro', 'Level 5 achieved', '🏆');
+    }
+
+    // Evolution logic: based on level
+    checkEvolution(notify=false) {
+      let newStage = this.stage;
+      if (this.level >= 2) newStage = 'child';
+      if (this.level >= 4) newStage = 'adult';
+      if (this.level >= 8) newStage = 'legendary';
+      if (newStage !== this.stage) {
+        this.stage = newStage;
+        if (notify) {
+          showToast(`✨ Evolution: ${this.stage}`);
+          playSfx(1318, 0.12, 'sine', 0.18);
+        }
+        this.updateImage();
+      }
+    }
+
+    tick() {
+      if (!this.alive) return;
+      // Time-of-day cycle
+      const t = (Date.now() / 1000) % 60; // 60 sec cycle scaled
+      this.timeOfDay = t < 15 ? 'morning' : t < 30 ? 'day' : t < 45 ? 'evening' : 'night';
+      // Weather randomization occasionally
+      if (Math.random() < 0.02) {
+        this.weather = ['sunny','rainy','windy','foggy'][Math.floor(Math.random()*4)];
+      }
+
+      // Stat drift
+      this.age += 1/3; // ~ every second ~ 0.33 age units
+      this.hunger = clamp(this.hunger + 1.2);
+      this.cleanliness = clamp(this.cleanliness - 0.9);
+      this.energy = clamp(this.energy - 0.8);
+      this.happiness = clamp(this.happiness - 0.5);
+
+      // Weather effects
+      if (this.weather === 'rainy') this.cleanliness = clamp(this.cleanliness + 0.3);
+      if (this.weather === 'sunny') this.happiness = clamp(this.happiness + 0.2);
+
+      // Health penalty for bad state
+      if (this.hunger > 85 || this.cleanliness < 20) this.health = clamp(this.health - 2.0);
+      if (this.energy < 10) this.health = clamp(this.health - 1.0);
+
+      if (this.health <= 0 || this.age > 300) {
+        this.alive = false;
+        showToast(`${this.name} has passed away... 💔`);
+      }
+      this.updateStatus();
+    }
+
+    save() {
+      const data = JSON.stringify(this);
+      localStorage.setItem('virtualPetSave', data);
+      showToast('Game saved 💾');
+      updateLeaderboard(this.name, this.level);
+    }
+
+    static from(data) {
+      const p = new VirtualPet(data.name, data.type);
+      Object.assign(p, data);
+      return p;
+    }
+  }
+
+  /**********************
+   * DOM Cache & Helpers *
+   **********************/
+  const DOM = {
+    petTitle: $('#petTitle'),
+    stageBadge: $('#stageBadge'),
+    petImage: $('#petImage'),
+    status: $('#status'),
+    coins: $('#coins'),
+    bars: {
+      hunger: $('#bar-hunger'),
+      energy: $('#bar-energy'),
+      clean: $('#bar-clean'),
+      health: $('#bar-health'),
+      happy: $('#bar-happy'),
+      xp: $('#bar-xp')
+    },
+    panels: {
+      shop: $('#shop'),
+      miniGame: $('#miniGame'),
+      achievements: $('#achievements'),
+      leaderboard: $('#leaderboard')
+    },
+    badgeContainer: $('#badgeContainer'),
+    inventory: $('#inventory'),
+    // Buttons
+    startBtn: $('#startBtn'),
+    loadBtn: $('#loadBtn'),
+    clearBtn: $('#clearBtn'),
+    feedBtn: $('#feedBtn'),
+    playBtn: $('#playBtn'),
+    restBtn: $('#restBtn'),
+    cleanBtn: $('#cleanBtn'),
+    exploreBtn: $('#exploreBtn'),
+    questBtn: $('#questBtn'),
+    craftBtn: $('#craftBtn'),
+    breedBtn: $('#breedBtn'),
+    customizeBtn: $('#customizeBtn'),
+    saveBtn: $('#saveBtn'),
+    dragonAction: $('#dragonAction'),
+    dogAction: $('#dogAction'),
+    catAction: $('#catAction'),
+    shopBtn: $('#shopBtn'),
+    miniGameBtn: $('#miniGameBtn'),
+    achievementsBtn: $('#achievementsBtn'),
+    leaderboardBtn: $('#leaderboardBtn'),
+    darkModeBtn: $('#darkModeBtn'),
+    // Mini-game
+    mgStart: $('#startMiniGame'),
+    mgPress: $('#pressMiniGame'),
+    mgStatus: $('#mgStatus'),
+    // Inputs
+    petName: $('#petName'),
+    petType: $('#petType'),
+    // Inventory toggle
+    invBtn: $('#invBtn'),
+    // Pet panel
+    petPanel: $('#petPanel'),
+    // Game UI
+    gameUI: $('#gameUI'),
+    leaderboardList: $('#leaderboardList')
+  };
+
+  function setBar(el, valuePercent) {
+    const v = clamp(valuePercent, 0, 100);
+    el.style.width = `${v}%`;
+    if (v < 25) el.style.background = 'var(--danger)';
+    else if (v < 50) el.style.background = '#ffcc00';
+    else el.style.background = 'var(--good)';
+  }
+
+  function renderBadges(list) {
+    DOM.badgeContainer.innerHTML = '';
+    list.forEach(b => {
+      const div = document.createElement('div');
+      div.className = 'badge';
+      div.innerHTML = `<span class="emoji">${b.emoji}</span> ${b.text}`;
+      DOM.badgeContainer.appendChild(div);
+    });
+  }
+
+  function renderInventory(pet) {
+    DOM.inventory.innerHTML = '';
+    const entries = Object.entries(pet.inventory);
+    if (!entries.length) {
+      DOM.inventory.innerHTML = '<div style="opacity:0.8">Inventory is empty.</div>';
+      return;
+    }
+    entries.forEach(([name, qty]) => {
+      const item = document.createElement('div');
+      item.className = 'inventory-item';
+      item.innerHTML = `<div class="name">${name}</div><div class="qty">x${qty}</div>`;
+      DOM.inventory.appendChild(item);
+    });
+  }
+
+  /****************
+   * Leaderboard  *
+   ****************/
+  function updateLeaderboard(name, level) {
+    const raw = localStorage.getItem('virtualPetLB');
+    const lb = raw ? JSON.parse(raw) : [];
+    const existing = lb.find(e => e.name === name);
+    if (existing) existing.level = Math.max(existing.level, level);
+    else lb.push({ name, level });
+    lb.sort((a,b) => b.level - a.level);
+    localStorage.setItem('virtualPetLB', JSON.stringify(lb));
+    renderLeaderboard(lb);
+  }
+
+  function renderLeaderboard(list) {
+    DOM.leaderboardList.innerHTML = '';
+    list.forEach((e, i) => {
+      const li = document.createElement('li');
+      li.textContent = `#${i+1} ${e.name} — Level ${e.level}`;
+      DOM.leaderboardList.appendChild(li);
+    });
+  }
+
+  function loadLeaderboard() {
+    const raw = localStorage.getItem('virtualPetLB');
+    renderLeaderboard(raw ? JSON.parse(raw) : []);
+  }
+
+  /************
+   * Shop     *
+   ************/
+  const PRICES = { food: 10, toy: 15, medicine: 20, hat: 25, bow: 25, heartGem: 50 };
+
+  function buyItem(item) {
+    if (!Game.pet) return;
+    const price = PRICES[item] ?? 999;
+    if (Game.pet.coins >= price) {
+      Game.pet.coins -= price;
+      Game.pet.inventory[item] = (Game.pet.inventory[item] || 0) + 1;
+      Game.pet.addXP(4);
+      playSfx(600, 0.1, 'square', 0.12);
+      showToast(`Bought ${item} for ${price} coins.`);
+      Game.pet.updateStatus();
+      renderInventory(Game.pet);
+    } else {
+      showToast('Not enough coins.');
+      playSfx(200, 0.07, 'sawtooth', 0.07);
+    }
+  }
+
+  /***********************
+   * Mini-Game (Reflex)  *
+   ***********************/
+  const MiniGame = {
+    active: false,
+    startTime: 0,
+    targetGreen: false,
+    timer: null,
+    combo: 0,
+
+    start() {
+      if (!Game.pet) return;
+      this.active = true;
+      this.combo = 0;
+      Game.pet.combo = 0;
+      DOM.mgPress.disabled = false;
+      DOM.mgStatus.textContent = 'Get ready...';
+      playSfx(440, 0.08, 'sine', 0.12);
+      this.startTime = Date.now();
+
+      clearInterval(this.timer);
+      this.timer = setInterval(() => {
+        const elapsed = (Date.now() - this.startTime) / 1000;
+        if (elapsed > 15) return this.end();
+        // Randomly switch target state
+        if (Math.random() < 0.25) {
+          this.targetGreen = !this.targetGreen;
+          DOM.mgPress.style.background = this.targetGreen ? 'var(--good)' : '#fff';
+          DOM.mgStatus.textContent = `Time: ${Math.max(0, (15 - elapsed)|0)}s • Combo ${this.combo}`;
+        }
+      }, 300);
+    },
+
+    press() {
+      if (!this.active) return;
+      if (this.targetGreen) {
+        this.combo++;
+        Game.pet.combo = this.combo;
+        playSfx(880, 0.06, 'square', 0.12);
+        DOM.mgStatus.textContent = `Nice! Combo ${this.combo}`;
+      } else {
+        this.combo = Math.max(0, this.combo - 1);
+        Game.pet.combo = this.combo;
+        playSfx(220, 0.06, 'sawtooth', 0.09);
+        DOM.mgStatus.textContent = `Oops! Combo ${this.combo}`;
+      }
+    },
+
+    end() {
+      this.active = false;
+      clearInterval(this.timer);
+      DOM.mgPress.disabled = true;
+      const rewardCoins = 5 + (this.combo * 2);
+      const rewardXP = 8 + (this.combo * 3);
+      Game.pet.addCoins(rewardCoins);
+      Game.pet.addXP(rewardXP);
+      showToast(`Mini-game over: +${rewardCoins} coins, +${rewardXP} XP!`);
+      Game.pet.updateStatus();
+    }
+  };
+
+  /****************
+   * Game Control *
+   ****************/
+  const Game = {
+    pet: null,
+    loop: null,
+
+    start(name, type) {
+      if (!name) { showToast('Please enter a pet name.'); return; }
+      this.pet = new VirtualPet(name, type);
+      DOM.petTitle.textContent = `${this.pet.name} — ${this.pet.type}`;
+      DOM.stageBadge.textContent = 'Stage: Egg';
+      DOM.gameUI.style.display = 'grid';
+      DOM.petPanel.style.display = 'none';
+      this.updateSpecialButtons(type);
+      this.bindPanelButtons();
+      this.pet.updateStatus();
+      playSfx(523.25, 0.1);
+      this.runLoop();
+    },
+
+    load() {
+      const raw = localStorage.getItem('virtualPetSave');
+      if (!raw) { showToast('No save found.'); return; }
+      const data = JSON.parse(raw);
+      this.pet = VirtualPet.from(data);
+      DOM.petTitle.textContent = `${this.pet.name} — ${this.pet.type}`;
+      DOM.gameUI.style.display = 'grid';
+      DOM.petPanel.style.display = 'none';
+      this.updateSpecialButtons(this.pet.type);
+      this.bindPanelButtons();
+      this.pet.updateStatus();
+      playSfx(500, 0.1);
+      this.runLoop();
+    },
+
+    clearSave() {
+      localStorage.removeItem('virtualPetSave');
+      showToast('Cleared save.');
+      playSfx(300, 0.1, 'triangle', 0.12);
+    },
+
+    updateSpecialButtons(type) {
+      DOM.dragonAction.style.display = (type === 'dragon') ? 'inline-block' : 'none';
+      DOM.dogAction.style.display = (type === 'dog') ? 'inline-block' : 'none';
+      DOM.catAction.style.display = (type === 'cat') ? 'inline-block' : 'none';
+    },
+
+    bindPanelButtons() {
+      // Shop toggle
+      DOM.shopBtn.addEventListener('click', () => togglePanel('shop'));
+      // Mini-game toggle
+      DOM.miniGameBtn.addEventListener('click', () => togglePanel('miniGame'));
+      // Achievements toggle
+      DOM.achievementsBtn.addEventListener('click', () => togglePanel('achievements'));
+      // Leaderboard toggle
+      DOM.leaderboardBtn.addEventListener('click', () => { togglePanel('leaderboard'); loadLeaderboard(); });
+
+      // Inventory show
+      DOM.invBtn.addEventListener('click', () => renderInventory(this.pet));
+
+      // Shop buys: use data-buy attribute
+      $$('#shop [data-buy]').forEach(btn => {
+        btn.addEventListener('click', () => buyItem(btn.getAttribute('data-buy')));
+      });
+    },
+
+    runLoop() {
+      clearInterval(this.loop);
+      this.loop = setInterval(() => this.pet.tick(), 1000);
+    }
+  };
+
+  function togglePanel(key) {
+    Object.keys(DOM.panels).forEach(k => {
+      if (k === key) DOM.panels[k].classList.toggle('show');
+      else DOM.panels[k].classList.remove('show');
+    });
+  }
+
+  /*****************
+   * Event Binding *
+   *****************/
+  DOM.startBtn.addEventListener('click', () => Game.start(DOM.petName.value.trim(), DOM.petType.value));
+  DOM.loadBtn.addEventListener('click', () => Game.load());
+  DOM.clearBtn.addEventListener('click', () => Game.clearSave());
+
+  // Primary actions
+  DOM.feedBtn.addEventListener('click', () => Game.pet && Game.pet.feed());
+  DOM.playBtn.addEventListener('click', () => Game.pet && Game.pet.play());
+  DOM.restBtn.addEventListener('click', () => Game.pet && Game.pet.rest());
+  DOM.cleanBtn.addEventListener('click', () => Game.pet && Game.pet.clean());
+  DOM.exploreBtn.addEventListener('click', () => Game.pet && Game.pet.explore());
+  DOM.questBtn.addEventListener('click', () => Game.pet && Game.pet.checkQuests());
+  DOM.craftBtn.addEventListener('click', () => Game.pet && Game.pet.craft());
+  DOM.breedBtn.addEventListener('click', () => Game.pet && Game.pet.breed());
+  DOM.customizeBtn.addEventListener('click', () => Game.pet && Game.pet.customize());
+  DOM.saveBtn.addEventListener('click', () => Game.pet && Game.pet.save());
+
+  // Special actions
+  DOM.dragonAction.addEventListener('click', () => Game.pet && Game.pet.breatheFire());
+  DOM.dogAction.addEventListener('click', () => Game.pet && Game.pet.fetch());
+  DOM.catAction.addEventListener('click', () => Game.pet && Game.pet.scratch());
+
+  // Dark mode
+  DOM.darkModeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    localStorage.setItem('pet.dark', document.body.classList.contains('dark') ? '1' : '0');
+  });
+
+  // Mini-game
+  DOM.mgStart.addEventListener('click', () => MiniGame.start());
+  DOM.mgPress.addEventListener('click', () => MiniGame.press());
+
+  // Initialize panels hidden & leaderboard
+  loadLeaderboard();
+
+})();
+</script>
+</body>
+</html>
